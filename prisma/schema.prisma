@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Core Entities ---
+
+// --- Auth Models (Better Auth Standard) ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  role          UserRole  @default(STUDENT) // Custom field
+
+  sessions      Session[]
+  accounts      Account[]
+
+  // Relations
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id])
+  
+  hobbies       Hobby[]
+  artifacts     Artifact[]
+  comments      Comment[]
+
+  @@map("user") // Optional: map to lowercase if Better Auth prefers, but Prisma defaults are fine if configured. Better Auth usually handles snake_case or camelCase via config.
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  password     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt // Added to satisfy Prisma check if needed
+
+  @@map("verification")
+}
+
+enum UserRole {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  slug        String   @unique
+  stages      Stage[]
+}
+
+model Stage {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  order       Int
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  weeks       Week[]
+  artifacts   Artifact[] // Artifacts linked to this stage (school work)
+}
+
+model Week {
+  id          String   @id @default(cuid())
+  title       String
+  order       Int
+  content     String? // Markdown or JSON
+  stageId     String
+  stage       Stage    @relation(fields: [stageId], references: [id])
+}
+
+model Artifact {
+  id          String       @id @default(cuid())
+  title       String
+  type        ArtifactType
+  status      ArtifactStatus @default(DRAFT)
+  content     String?      // URL or Text content
+  
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  
+  // Optional linkages
+  stageId     String?
+  stage       Stage?       @relation(fields: [stageId], references: [id])
+  
+  hobbyId     String?
+  hobby       Hobby?       @relation(fields: [hobbyId], references: [id])
+  
+  teamId      String?
+  team        Team?        @relation(fields: [teamId], references: [id])
+
+  // Relations
+  reflection  Reflection?
+  tools       ToolUsage[]
+  comments    Comment[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum ArtifactType {
+  SCHOOL
+  PERSONAL
+  TEAM
+  EXTERNAL
+}
+
+enum ArtifactStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+}
+
+model Reflection {
+  id          String   @id @default(cuid())
+  beforeState String   @db.Text // "What existed before AI"
+  afterState  String   @db.Text // "What was done using AI"
+  timeSaved   Int      // In minutes
+  
+  artifactId  String   @unique
+  artifact    Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+}
+
+model Tool {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  category    String?
+  url         String?
+  usages      ToolUsage[]
+}
+
+model ToolUsage {
+  id          String   @id @default(cuid())
+  toolId      String
+  tool        Tool     @relation(fields: [toolId], references: [id])
+  artifactId  String
+  artifact    Artifact @relation(fields: [artifactId], references: [id])
+}
+
+model Hobby {
+  id          String     @id @default(cuid())
+  name        String
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  artifacts   Artifact[]
+}
+
+model Team {
+  id          String     @id @default(cuid())
+  name        String
+  goal        String?
+  members     User[]
+  artifacts   Artifact[]
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  artifactId  String
+  artifact    Artifact @relation(fields: [artifactId], references: [id])
+  createdAt   DateTime @default(now())
+}
