@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Zap, Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -28,7 +29,7 @@ export default function LoginPage() {
                 router.push('/dashboard')
                 router.refresh()
             },
-            onError: (ctx) => {
+            onError: (ctx: any) => {
                 setErrorMessage(ctx.error.message || 'Invalid credentials.')
             }
         })
@@ -144,7 +145,7 @@ export default function LoginPage() {
                 </div>
 
                 <p className="mt-8 text-center text-muted-foreground text-sm">
-                    Don't have an account? <span className="text-primary hover:underline cursor-pointer font-semibold">Request clearance</span>
+                    Don't have an account? <Link href="/sign-up" className="text-primary hover:underline cursor-pointer font-semibold">Request clearance</Link>
                 </p>
             </div>
         </div>

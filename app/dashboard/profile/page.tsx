@@ -2,8 +2,12 @@ import { auth } from '@/lib/auth';
 import { headers } from "next/headers";
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { User, Mail, Shield, Calendar, Box, Heart, Users, Sparkles, Activity, Clock, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { Box, Activity, Clock, Zap, Users, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Artifact, Reflection } from '@prisma/client';
+import ProfileHeaderClient from './profile-header-client';
+import HobbySectionClient from './hobby-section-client';
 
 export default async function ProfilePage() {
     const session = await auth.api.getSession({
@@ -22,6 +26,12 @@ export default async function ProfilePage() {
             artifacts: {
                 include: {
                     reflection: true,
+                    // Include tool usages to calculate unique tools
+                    artifactTools: {
+                        include: {
+                            tool: true
+                        }
+                    }
                 },
                 orderBy: {
                     createdAt: 'desc'
@@ -53,58 +63,19 @@ export default async function ProfilePage() {
             }
         }
     });
-    const totalTimeSaved = reflections.reduce((acc, curr) => acc + curr.timeSaved, 0);
+    const totalTimeSaved = reflections.reduce((acc: number, curr: Reflection) => acc + (curr.timeSavedMinutes || 0), 0);
+
+    // Calculate unique tools involved
+    const uniqueTools = new Set<string>();
+    userData.artifacts.forEach(artifact => {
+        artifact.artifactTools.forEach(usage => uniqueTools.add(usage.toolId));
+    });
+    const involvedToolsCount = uniqueTools.size;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Profile Hero Header */}
-            <div className="glass-panel rounded-[2.5rem] p-10 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-
-                <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                    <div className="relative group">
-                        <div className="w-32 h-32 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl relative overflow-hidden group-hover:border-primary/30 transition-all duration-500">
-                            {userData.image ? (
-                                <img src={userData.image} alt={userData.name} className="w-full h-full object-cover" />
-                            ) : (
-                                <User className="w-16 h-16 text-muted-foreground group-hover:text-primary transition-colors" />
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
-                                <span className="text-[10px] uppercase font-bold text-white tracking-widest">Update</span>
-                            </div>
-                        </div>
-                        <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary rounded-xl flex items-center justify-center glow-primary border-4 border-background">
-                            <Sparkles className="text-black w-4 h-4 fill-black" />
-                        </div>
-                    </div>
-
-                    <div className="text-center md:text-left space-y-2 flex-grow">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold uppercase tracking-widest text-primary">
-                            System Node: {userData.role}
-                        </div>
-                        <h1 className="text-4xl font-extrabold tracking-tighter text-gradient">{userData.name}</h1>
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-muted-foreground text-sm font-medium">
-                            <div className="flex items-center gap-2">
-                                <Mail className="w-4 h-4" />
-                                {userData.email}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                Joined {new Date(userData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                        <button className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95">
-                            Settings
-                        </button>
-                        <button className="px-6 py-3 rounded-2xl bg-primary text-black text-sm font-bold uppercase tracking-widest hover:scale-105 transition-all glow-primary active:scale-95">
-                            Edit Profile
-                        </button>
-                    </div>
-                </div>
-            </div>
+            {/* Interactive Profile Header */}
+            <ProfileHeaderClient user={userData} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Stats Grid */}
@@ -113,7 +84,7 @@ export default async function ProfilePage() {
                         {[
                             { label: 'Artifacts', value: userData._count.artifacts, icon: Box, color: 'text-primary' },
                             { label: 'Time Saved', value: `${totalTimeSaved}m`, icon: Clock, color: 'text-blue-400' },
-                            { label: 'Involved Tools', value: userData._count.comments, icon: Activity, color: 'text-rose-400' },
+                            { label: 'Involved Tools', value: involvedToolsCount, icon: Activity, color: 'text-rose-400' },
                         ].map((stat, i) => (
                             <div key={i} className="glass-card p-6 rounded-[2rem] border-white/5 group hover:border-white/10 transition-all">
                                 <div className={cn("w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-4 transition-colors", `group-hover:${stat.color}`)}>
@@ -132,7 +103,7 @@ export default async function ProfilePage() {
                                 <Zap className="w-5 h-5 text-primary" />
                                 Engineering Activity
                             </h2>
-                            <button className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">View All</button>
+                            <Link href="/dashboard/artifacts" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">View All</Link>
                         </div>
 
                         <div className="space-y-4">
@@ -154,7 +125,7 @@ export default async function ProfilePage() {
                                                 {artifact.reflection && (
                                                     <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-primary">
                                                         <Clock className="w-3 h-3" />
-                                                        +{artifact.reflection.timeSaved}m saved
+                                                        +{artifact.reflection.timeSavedMinutes}m saved
                                                     </span>
                                                 )}
                                             </div>
@@ -185,9 +156,9 @@ export default async function ProfilePage() {
                                     <h3 className="font-bold text-blue-400">{userData.team.name}</h3>
                                     <p className="text-xs text-muted-foreground leading-relaxed">{userData.team.goal || 'No objective defined for this node.'}</p>
                                 </div>
-                                <button className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
+                                <Link href="/dashboard/team" className="block w-full text-center py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
                                     Open Team Space
-                                </button>
+                                </Link>
                             </div>
                         ) : (
                             <div className="p-6 text-center space-y-4 rounded-2xl border-2 border-dashed border-white/5">
@@ -198,29 +169,10 @@ export default async function ProfilePage() {
                         )}
                     </div>
 
-                    {/* Hobbies Section */}
-                    <div className="glass-panel rounded-[2rem] p-6 space-y-6">
-                        <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
-                            <Heart className="w-5 h-5 text-rose-400" />
-                            Personal Nodes
-                        </h2>
-                        <div className="flex flex-wrap gap-2">
-                            {userData.hobbies.length > 0 ? (
-                                userData.hobbies.map((hobby) => (
-                                    <span key={hobby.id} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-muted-foreground hover:border-rose-400/30 hover:text-rose-400 transition-all cursor-default">
-                                        {hobby.name}
-                                    </span>
-                                ))
-                            ) : (
-                                <p className="text-xs text-muted-foreground italic px-2">No personal interests indexed.</p>
-                            )}
-                            <button className="w-full mt-2 py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
-                                Manage Hobbies
-                            </button>
-                        </div>
-                    </div>
+                    {/* Interactive Hobbies Section */}
+                    <HobbySectionClient hobbies={userData.hobbies} />
 
-                    {/* Security Info */}
+                    {/* Security Info (Static for now, but wired to data if present) */}
                     <div className="glass-panel rounded-[2rem] p-6 bg-gradient-to-br from-background to-white/[0.01]">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
@@ -234,8 +186,10 @@ export default async function ProfilePage() {
                                 <span className="text-emerald-500">Verified</span>
                             </div>
                             <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider">
-                                <span className="text-muted-foreground">MFA Node</span>
-                                <span className="text-rose-500">Deactivated</span>
+                                <span className="text-muted-foreground">Email Verified</span>
+                                <span className={userData.emailVerified ? "text-emerald-500" : "text-amber-500"}>
+                                    {userData.emailVerified ? 'Confirmed' : 'Pending'}
+                                </span>
                             </div>
                         </div>
                     </div>

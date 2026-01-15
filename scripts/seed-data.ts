@@ -74,29 +74,37 @@ async function main() {
         {
             title: 'Initial Database Schema Design',
             type: 'SCHOOL' as const,
-            status: 'REVIEWED' as const,
+            status: 'VALIDATED' as const,
+            problemDescription: 'Legacy authentication was insecure and difficult to maintain.',
+            goal: 'Integrate Better Auth for secure, scalable authentication.',
             content: 'Refactoring the CSC platform schema for Better Auth integration.',
             reflection: {
                 beforeState: 'Manual SQL migrations and basic User models with passwords.',
                 afterState: 'Automated Prisma migrations and integrated Auth models with Better Auth adapters.',
-                timeSaved: 120
+                timeSavedMinutes: 120,
+                workSimplificationNote: 'Eliminated manual boilerplate and reduced risk of auth security flaws.'
             }
         },
         {
-            title: 'Premium Glassmorphic UI Components',
-            type: 'PERSONAL' as const,
-            status: 'SUBMITTED' as const,
+            title: 'Glassmorphism Design System',
+            type: 'SCHOOL' as const,
+            status: 'VALIDATED' as const,
+            problemDescription: 'Inconsistent UI styling across the application leading to poor user experience.',
+            goal: 'Create a unified design system that is both beautiful and functional.',
             content: 'Building a library of reusable glassmorphic components using Tailwind utility classes.',
             reflection: {
                 beforeState: 'Basic CSS modules and fragmented styling patterns.',
                 afterState: 'Unified design system with consistent blurs, gradients, and typography.',
-                timeSaved: 240
+                timeSavedMinutes: 240,
+                workSimplificationNote: 'Faster UI iteration and consistent look and feel across the app.'
             }
         },
         {
             title: 'Cyberpunk Short Story Collection',
             type: 'PERSONAL' as const,
             status: 'DRAFT' as const,
+            problemDescription: 'Lack of creative outlet for exploring futuristic themes.',
+            goal: 'Write a series of short stories exploring the intersection of AI and humanity.',
             content: 'Drafting stories about AI-augmented engineering in Neo-Tokyo.',
             hobbyId: hobbies[1].id
         }

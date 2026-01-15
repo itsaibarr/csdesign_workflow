@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Layers, Box, Users, Wrench, LogOut, Zap, User } from 'lucide-react';
+import { Home, Layers, Box, Users, Wrench, LogOut, Zap, User, Sparkles } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ const links = [
     { name: 'Overview', href: '/dashboard', icon: Home },
     { name: 'Courses', href: '/dashboard/courses', icon: Layers },
     { name: 'Artifacts', href: '/dashboard/artifacts', icon: Box },
+    { name: 'Mentor', href: '/dashboard/mentor', icon: Sparkles },
     { name: 'Community', href: '/dashboard/team', icon: Users },
     { name: 'Resources', href: '/dashboard/tools', icon: Wrench },
     { name: 'Profile', href: '/dashboard/profile', icon: User },

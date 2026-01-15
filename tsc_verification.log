@@ -1,0 +1,13 @@
+app/dashboard/profile/page.tsx(71,34): error TS2552: Cannot find name 'User'. Did you mean 'Users'?
+app/dashboard/tools/page.tsx(31,53): error TS7006: Parameter 't' implicitly has an 'any' type.
+app/dashboard/tools/page.tsx(62,29): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+scripts/seed-data.ts(112,17): error TS2322: Type '{ create: { beforeState: string; afterState: string; timeSaved: number; } | { beforeState: string; afterState: string; timeSaved: number; }; }' is not assignable to type 'ReflectionUncheckedCreateNestedOneWithoutArtifactInput | ReflectionCreateNestedOneWithoutArtifactInput | undefined'.
+  Types of property 'create' are incompatible.
+    Type '{ beforeState: string; afterState: string; timeSaved: number; } | { beforeState: string; afterState: string; timeSaved: number; }' is not assignable to type '(Without<ReflectionCreateWithoutArtifactInput, ReflectionUncheckedCreateWithoutArtifactInput> & ReflectionUncheckedCreateWithoutArtifactInput) | (Without<...> & ReflectionCreateWithoutArtifactInput) | undefined'.
+      Type '{ beforeState: string; afterState: string; timeSaved: number; }' is not assignable to type '(Without<ReflectionCreateWithoutArtifactInput, ReflectionUncheckedCreateWithoutArtifactInput> & ReflectionUncheckedCreateWithoutArtifactInput) | (Without<...> & ReflectionCreateWithoutArtifactInput) | undefined'.
+        Type '{ beforeState: string; afterState: string; timeSaved: number; }' is not assignable to type 'Without<ReflectionUncheckedCreateWithoutArtifactInput, ReflectionCreateWithoutArtifactInput> & ReflectionCreateWithoutArtifactInput'.
+          Type '{ beforeState: string; afterState: string; timeSaved: number; }' is missing the following properties from type 'ReflectionCreateWithoutArtifactInput': timeSavedMinutes, workSimplificationNote
+scripts/seed-users.ts(37,17): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '{ email: string; password: string; name: string; role: string; }' is not assignable to type '{ name: string; email: string; password: string; image?: string | undefined; callbackURL?: string | undefined; rememberMe?: boolean | undefined; } & { teamId: string; } & { role?: string | null | undefined; teamId?: string | ... 1 more ... | undefined; }'.
+      Property 'teamId' is missing in type '{ email: string; password: string; name: string; role: string; }' but required in type '{ teamId: string; }'.

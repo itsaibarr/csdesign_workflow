@@ -12,26 +12,34 @@ datasource db {
 // --- Auth Models (Better Auth Standard) ---
 
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
-  email         String    @unique
+  email         String   @unique
   emailVerified Boolean?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  role          UserRole  @default(STUDENT) // Custom field
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  sessions      Session[]
-  accounts      Account[]
+  role UserRole @default(STUDENT) // Custom field
+
+  sessions Session[]
+  accounts Account[]
 
   // Relations
   teamId        String?
-  team          Team?     @relation(fields: [teamId], references: [id])
+  team          Team?   @relation("TeamMembers", fields: [teamId], references: [id])
   
-  hobbies       Hobby[]
-  artifacts     Artifact[]
-  comments      Comment[]
+  createdTeams  Team[]  @relation("TeamCreator")
+  mentoredTeams Team[]  @relation("TeamMentor")
+  assignedTasks ProjectTask[]
+  mentorReviews MentorReview[] @relation("ReviewsByMentor")
+
+  hobbies          Hobby[]
+  artifacts        Artifact[]
+  comments         Comment[]
+  UserNodeProgress UserNodeProgress[]
+  toolSubmissions  Tool[]           @relation("ToolSubmissions")
+  toolSubmissionReviews ToolSubmission[] @relation("SubmissionReviews")
 
   @@map("user") // Optional: map to lowercase if Better Auth prefers, but Prisma defaults are fine if configured. Better Auth usually handles snake_case or camelCase via config.
 }
@@ -46,7 +54,7 @@ model Session {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
 }
@@ -63,8 +71,9 @@ model Account {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, providerId])
   @@map("account")
 }
 
@@ -86,60 +95,89 @@ enum UserRole {
 }
 
 model Course {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  slug        String       @unique
+  nodes       CourseNode[]
+}
+
+model CourseNode {
   id          String   @id @default(cuid())
   title       String
   description String?
-  slug        String   @unique
-  stages      Stage[]
+  weekRange   String // e.g. "1-2"
+  nodeType    NodeType
+  order       Int
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  requiredActions String? // JSON description of what needs to be done
+
+  progress  UserNodeProgress[]
+  artifacts Artifact[] // Artifacts linked to this node
 }
 
-model Stage {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  order       Int
-  courseId    String
-  course      Course   @relation(fields: [courseId], references: [id])
-  weeks       Week[]
-  artifacts   Artifact[] // Artifacts linked to this stage (school work)
+enum NodeType {
+  FOUNDATION
+  SKILL
+  AUTOMATION
+  EXPLORATION
+  TEAM
+  FINAL
 }
 
-model Week {
-  id          String   @id @default(cuid())
-  title       String
-  order       Int
-  content     String? // Markdown or JSON
-  stageId     String
-  stage       Stage    @relation(fields: [stageId], references: [id])
+model UserNodeProgress {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  nodeId      String
+  node        CourseNode @relation(fields: [nodeId], references: [id])
+  status      NodeStatus @default(LOCKED)
+  completedAt DateTime?
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([userId, nodeId])
+}
+
+enum NodeStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
 }
 
 model Artifact {
-  id          String       @id @default(cuid())
-  title       String
-  type        ArtifactType
-  status      ArtifactStatus @default(DRAFT)
-  content     String?      // URL or Text content
-  
-  userId      String
-  user        User         @relation(fields: [userId], references: [id])
-  
-  // Optional linkages
-  stageId     String?
-  stage       Stage?       @relation(fields: [stageId], references: [id])
-  
-  hobbyId     String?
-  hobby       Hobby?       @relation(fields: [hobbyId], references: [id])
-  
-  teamId      String?
-  team        Team?        @relation(fields: [teamId], references: [id])
+  id                 String         @id @default(cuid())
+  title              String
+  problemDescription String
+  goal               String
+  solutionPlan       String?        @db.Text
+  type               ArtifactType
+  status             ArtifactStatus @default(DRAFT)
+  content            String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Linkages
+  courseNodeId String?
+  courseNode   CourseNode? @relation(fields: [courseNodeId], references: [id])
+
+  hobbyId String?
+  hobby   Hobby?  @relation(fields: [hobbyId], references: [id])
+
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
 
   // Relations
-  reflection  Reflection?
-  tools       ToolUsage[]
-  comments    Comment[]
+  reflection    Reflection?
+  artifactTools ArtifactTool[]
+  comments      Comment[]
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ArtifactType {
@@ -152,57 +190,211 @@ enum ArtifactType {
 enum ArtifactStatus {
   DRAFT
   SUBMITTED
-  REVIEWED
+  IN_PROGRESS
+  VALIDATED
+  ARCHIVED
 }
 
 model Reflection {
-  id          String   @id @default(cuid())
-  beforeState String   @db.Text // "What existed before AI"
-  afterState  String   @db.Text // "What was done using AI"
-  timeSaved   Int      // In minutes
-  
-  artifactId  String   @unique
-  artifact    Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  id          String @id @default(cuid())
+  beforeState String @db.Text // "What existed before AI"
+  afterState  String @db.Text // "What was done using AI"
+
+  // Efficiency Data
+  timeSavedMinutes       Int
+  workSimplificationNote String @db.Text
+
+  // Validation status
+  reportedByStudent Boolean @default(true)
+  validatedByMentor Boolean @default(false)
+
+  artifactId String   @unique
+  artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
 }
 
 model Tool {
-  id          String      @id @default(cuid())
-  name        String      @unique
-  category    String?
-  url         String?
-  usages      ToolUsage[]
+  id               String           @id @default(cuid())
+  name             String           @unique
+  shortDescription String           // Brief one-liner for cards
+  fullDescription  String?          @db.Text // Detailed explanation for details page
+  url              String?
+  category         ToolCategory     @default(OTHER)
+  usageStatus      ToolUsageStatus  @default(COURSE_OFFICIAL)
+  badges           String[]         // e.g. ["Used in course", "Free tier", "Community driven"]
+  usageContexts    String[]         // Example use cases from course curriculum
+
+  // Discovery fields
+  pricing          PricingModel     @default(FREE)
+  problemSolved    String?          @db.Text
+  relevance        String[]         // ["school", "hobbies", "work"]
+  source           String?          // e.g. "AI Discovery", "Product Hunt"
+  
+  submittedById    String?
+  submittedBy      User?            @relation("ToolSubmissions", fields: [submittedById], references: [id])
+  
+  artifactTools    ArtifactTool[]   // Replaces simple ToolUsage
+  submissions      ToolSubmission[] @relation("SubmissionForTool")
+  
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
-model ToolUsage {
-  id          String   @id @default(cuid())
-  toolId      String
-  tool        Tool     @relation(fields: [toolId], references: [id])
-  artifactId  String
-  artifact    Artifact @relation(fields: [artifactId], references: [id])
+model ArtifactTool {
+  id           String   @id @default(cuid())
+  toolId       String
+  tool         Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  artifactId   String
+  artifact     Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  usageContext String?  @db.Text // How the tool was used in this specific artifact
+  
+  createdAt    DateTime @default(now())
+  
+  @@unique([toolId, artifactId]) // Prevent duplicate tool-artifact links
 }
 
 model Hobby {
-  id          String     @id @default(cuid())
-  name        String
-  userId      String
-  user        User       @relation(fields: [userId], references: [id])
-  artifacts   Artifact[]
+  id        String     @id @default(cuid())
+  name      String
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  artifacts Artifact[]
 }
 
 model Team {
-  id          String     @id @default(cuid())
-  name        String
-  goal        String?
-  members     User[]
-  artifacts   Artifact[]
+  id           String       @id @default(cuid())
+  name         String
+  teamCode     String       @unique // 6-char code for joining
+  qrCodeData   String?      @db.Text // base64 QR image
+  projectCase  String?      @db.Text
+  goal         String?
+  status       TeamStatus   @default(FORMING)
+  maxMembers   Int          @default(5)
+  
+  createdBy    String
+  creator      User         @relation("TeamCreator", fields: [createdBy], references: [id])
+  
+  mentorId     String?
+  mentor       User?        @relation("TeamMentor", fields: [mentorId], references: [id])
+  
+  members      User[]       @relation("TeamMembers")
+  artifacts    Artifact[]
+  tasks        ProjectTask[]
+  reviews      MentorReview[]
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+enum TeamStatus {
+  FORMING      // Accepting members
+  ACTIVE       // Working on project
+  SUBMITTED    // Submitted to mentor
+  APPROVED     // Approved by mentor
+  ARCHIVED     // Completed/closed
+}
+
+model ProjectTask {
+  id          String      @id @default(cuid())
+  title       String
+  description String?     @db.Text
+  status      TaskStatus  @default(TODO)
+  order       Int         @default(0)
+  
+  teamId      String
+  team        Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  assignedTo  String?
+  assignee    User?       @relation(fields: [assignedTo], references: [id])
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+model MentorReview {
+  id          String       @id @default(cuid())
+  feedback    String       @db.Text
+  status      ReviewStatus @default(PENDING)
+  
+  teamId      String
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  mentorId    String
+  mentor      User         @relation("ReviewsByMentor", fields: [mentorId], references: [id])
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum ReviewStatus {
+  PENDING
+  CHANGES_REQUESTED
+  APPROVED
 }
 
 model Comment {
-  id          String   @id @default(cuid())
-  content     String
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  artifactId  String
-  artifact    Artifact @relation(fields: [artifactId], references: [id])
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  content    String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  artifactId String
+  artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+// --- Tool Resources Module ---
+
+enum ToolCategory {
+  LLM        // Large Language Models (ChatGPT, Claude, Gemini)
+  AUTOMATION // Workflow automation (Zapier, Make, n8n)
+  DESIGN     // Design tools (Figma, Canva, Midjourney)
+  IDE        // Development environments (Cursor, GitHub Copilot)
+  SECURITY   // Security and privacy tools
+  RESEARCH   // Academic and research tools (Elicit, Perplexity)
+  PRODUCTIVITY // General productivity
+  OTHER      // Miscellaneous tools
+}
+
+enum ToolUsageStatus {
+  COURSE_OFFICIAL    // Used in official course curriculum
+  COMMUNITY_APPROVED // Submitted by student, approved by mentor
+  PENDING_REVIEW     // Awaiting mentor/admin approval
+  AI_DISCOVERED      // Automatically discovered
+  REJECTED           // Rejected by admin
+}
+
+enum PricingModel {
+  FREE
+  FREEMIUM
+  PAID
+  TRIAL
+}
+
+model ToolSubmission {
+  id          String          @id @default(cuid())
+  name        String
+  url         String
+  category    ToolCategory
+  description String          @db.Text
+  useCase     String          @db.Text // How the student used it
+  taskSolved  String          @db.Text // What task it helped solve
+  status      ToolUsageStatus @default(PENDING_REVIEW)
+
+  submittedById String
+  submittedBy   User   @relation("SubmissionReviews", fields: [submittedById], references: [id])
+
+  reviewedById String?
+  reviewNotes  String? @db.Text
+
+  approvedToolId String? @unique
+  approvedTool   Tool?   @relation("SubmissionForTool", fields: [approvedToolId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
