@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Plus, Search, Clock, ArrowUpRight, Sparkles, X, CheckCircle, PenTool, Trash2, FileText } from 'lucide-react';
+import { Box, Plus, Search, Clock, ArrowUpRight, Sparkles, X, CheckCircle, PenTool, Trash2, FileText, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Artifact, ArtifactStatus, ArtifactType, Reflection } from '@prisma/client';
@@ -14,6 +14,7 @@ type ArtifactWithRelations = Artifact & {
     // Explicitly add potentially missing fields if client is stale
     solutionPlan?: string | null;
     problemDescription?: string;
+    comments?: { id: string; content: string; createdAt: Date }[];
 };
 
 interface ArtifactsClientProps {
@@ -68,6 +69,10 @@ export default function ArtifactsClientPage({ initialArtifacts, userId, userRole
     const [planData, setPlanData] = useState('');
     const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
     const [toolSearch, setToolSearch] = useState('');
+
+    // Feedback Modal State
+    const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+    const [selectedFeedback, setSelectedFeedback] = useState<string>('');
 
     useEffect(() => {
         const id = searchParams.get('id');
@@ -140,6 +145,14 @@ export default function ArtifactsClientPage({ initialArtifacts, userId, userRole
             window.location.reload();
         } else {
             alert(result.error);
+        }
+    };
+
+    const handleViewFeedback = (comments: { id: string; content: string }[]) => {
+        if (comments && comments.length > 0) {
+            // Filter for the latest actionable feedback if needed, currently taking the most recent one
+            setSelectedFeedback(comments[0].content);
+            setIsFeedbackModalOpen(true);
         }
     };
 
@@ -299,6 +312,14 @@ export default function ArtifactsClientPage({ initialArtifacts, userId, userRole
                                                 {/* Student Actions: Plan Solution */}
                                                 {userRole === 'STUDENT' && (
                                                     <>
+                                                        {artifact.status === ArtifactStatus.NEEDS_IMPROVEMENT && artifact.comments && artifact.comments.length > 0 && (
+                                                            <button
+                                                                onClick={() => handleViewFeedback(artifact.comments || [])}
+                                                                className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all group/btn animate-pulse"
+                                                                title="View Mentor Feedback">
+                                                                <AlertCircle className="w-4 h-4 text-amber-500" />
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={() => openPlanModal(artifact)}
                                                             className="p-2 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 hover:bg-white/10 transition-all group/btn"
@@ -492,6 +513,34 @@ export default function ArtifactsClientPage({ initialArtifacts, userId, userRole
                                 Submit Plan to Mentor
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Feedback Modal */}
+            {isFeedbackModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="relative w-full max-w-md bg-[#0a0a0a] border border-amber-500/30 rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <button
+                            onClick={() => setIsFeedbackModalOpen(false)}
+                            className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/10 transition-colors">
+                            <X className="w-5 h-5 text-muted-foreground" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-4 text-amber-500">
+                            <AlertCircle className="w-6 h-6" />
+                            <h2 className="text-xl font-bold tracking-tight">Mentor Feedback</h2>
+                        </div>
+
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-amber-200/90 text-sm leading-relaxed whitespace-pre-wrap">
+                            {selectedFeedback}
+                        </div>
+
+                        <button
+                            onClick={() => setIsFeedbackModalOpen(false)}
+                            className="w-full mt-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest rounded-xl transition-colors text-xs">
+                            Close
+                        </button>
                     </div>
                 </div>
             )}

@@ -26,7 +26,6 @@ export default async function ProfilePage() {
             artifacts: {
                 include: {
                     reflection: true,
-                    // Include tool usages to calculate unique tools
                     artifactTools: {
                         include: {
                             tool: true
@@ -38,10 +37,24 @@ export default async function ProfilePage() {
                 },
                 take: 5
             },
+            mentoredTeams: {
+                include: {
+                    members: true
+                }
+            },
+            mentorReviews: {
+                take: 5,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    team: true
+                }
+            },
             _count: {
                 select: {
                     artifacts: true,
                     comments: true,
+                    mentorReviews: true,
+                    mentoredTeams: true
                 }
             }
         }
@@ -51,6 +64,131 @@ export default async function ProfilePage() {
         return (
             <div className="flex h-full items-center justify-center">
                 <p className="text-muted-foreground">User profile not found.</p>
+            </div>
+        );
+    }
+
+    // Mentor View
+    if (userData.role === 'MENTOR') {
+        const totalStudents = userData.mentoredTeams.reduce((acc, team) => acc + team.members.length, 0);
+
+        return (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <ProfileHeaderClient user={userData} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Stats Grid */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            {[
+                                { label: 'Students', value: totalStudents, icon: Users, color: 'text-primary' },
+                                { label: 'Reviews', value: userData._count.mentorReviews, icon: Shield, color: 'text-blue-400' },
+                                { label: 'Active Teams', value: userData._count.mentoredTeams, icon: Box, color: 'text-rose-400' },
+                            ].map((stat, i) => (
+                                <div key={i} className="glass-card p-6 rounded-[2rem] border-white/5 group hover:border-white/10 transition-all">
+                                    <div className={cn("w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-4 transition-colors", `group-hover:${stat.color}`)}>
+                                        <stat.icon className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-2xl font-black tracking-tight">{stat.value}</div>
+                                    <div className="text-[10px] uppercase font-bold tracking-[0.2em] text-muted-foreground mt-1">{stat.label}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Recent Reviews Feed */}
+                        <div className="glass-panel rounded-[2rem] p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+                                    <Activity className="w-5 h-5 text-primary" />
+                                    Recent Reviews
+                                </h2>
+                                <Link href="/dashboard/reviews" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">View All</Link>
+                            </div>
+
+                            <div className="space-y-4">
+                                {userData.mentorReviews.length > 0 ? (
+                                    userData.mentorReviews.map((review) => (
+                                        <div key={review.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group flex items-start gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0">
+                                                <Users className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-grow space-y-1">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="font-bold text-sm tracking-wide">{review.team.name}</h3>
+                                                    <span className="text-[10px] text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-muted-foreground line-clamp-1">
+                                                        {review.feedback || "No feedback content."}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-widest text-primary">
+                                                        {review.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="py-12 text-center space-y-2">
+                                        <Activity className="w-12 h-12 text-white/5 mx-auto" />
+                                        <p className="text-sm text-muted-foreground">No recent reviews recorded.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sidebar Column */}
+                    <div className="space-y-8">
+                        {/* Supervised Teams Section */}
+                        <div className="glass-panel rounded-[2rem] p-6 space-y-6">
+                            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
+                                <Users className="w-5 h-5 text-blue-400" />
+                                Supervised Teams
+                            </h2>
+                            {userData.mentoredTeams.length > 0 ? (
+                                <div className="space-y-4">
+                                    {userData.mentoredTeams.map(team => (
+                                        <div key={team.id} className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-2">
+                                            <h3 className="font-bold text-blue-400">{team.name}</h3>
+                                            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{team.projectCase || 'No project case defined.'}</p>
+                                        </div>
+                                    ))}
+                                    <Link href="/dashboard/teams" className="block w-full text-center py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
+                                        View All Teams
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="p-6 text-center space-y-4 rounded-2xl border-2 border-dashed border-white/5">
+                                    <Users className="w-10 h-10 text-white/5 mx-auto" />
+                                    <p className="text-xs text-muted-foreground">No active teams under supervision.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Security Info */}
+                        <div className="glass-panel rounded-[2rem] p-6 bg-gradient-to-br from-background to-white/[0.01]">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                    <Shield className="w-4 h-4" />
+                                </div>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-foreground/80">Access Integrity</h2>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider">
+                                    <span className="text-muted-foreground">ID Status</span>
+                                    <span className="text-emerald-500">Verified</span>
+                                </div>
+                                <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider">
+                                    <span className="text-muted-foreground">Email Verified</span>
+                                    <span className={userData.emailVerified ? "text-emerald-500" : "text-amber-500"}>
+                                        {userData.emailVerified ? 'Confirmed' : 'Pending'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

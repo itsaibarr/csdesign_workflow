@@ -32,6 +32,11 @@ export default async function ArtifactsPage() {
                         }
                     }
                 }
+            },
+            comments: {
+                orderBy: {
+                    createdAt: 'desc'
+                }
             }
         },
         orderBy: {

@@ -2,23 +2,41 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Layers, Box, Users, Wrench, LogOut, Zap, User, Sparkles } from 'lucide-react';
+import { Home, Layers, Box, Users, Wrench, LogOut, Zap, User, Sparkles, FileText, CheckCircle } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
-const links = [
-    { name: 'Overview', href: '/dashboard', icon: Home },
-    { name: 'Courses', href: '/dashboard/courses', icon: Layers },
-    { name: 'Artifacts', href: '/dashboard/artifacts', icon: Box },
-    { name: 'Mentor', href: '/dashboard/mentor', icon: Sparkles },
-    { name: 'Community', href: '/dashboard/team', icon: Users },
-    { name: 'Resources', href: '/dashboard/tools', icon: Wrench },
-    { name: 'Profile', href: '/dashboard/profile', icon: User },
-];
+interface SideNavProps {
+    role?: string;
+}
 
-export default function SideNav() {
+export default function SideNav({ role = 'STUDENT' }: SideNavProps) {
     const pathname = usePathname();
     const { data: session } = authClient.useSession();
+
+    const links = useMemo(() => {
+        if (role === 'MENTOR') {
+            return [
+                { name: 'Overview', href: '/dashboard', icon: Home },
+                { name: 'Students', href: '/dashboard/students', icon: Users },
+                { name: 'Teams', href: '/dashboard/teams', icon: Box },
+                { name: 'Reviews', href: '/dashboard/reviews', icon: FileText },
+                { name: 'Profile', href: '/dashboard/profile', icon: User },
+            ];
+        }
+
+        // Default to Student
+        return [
+            { name: 'Overview', href: '/dashboard', icon: Home },
+            { name: 'Courses', href: '/dashboard/courses', icon: Layers },
+            { name: 'Artifacts', href: '/dashboard/artifacts', icon: Box },
+            { name: 'Mentor', href: '/dashboard/mentor', icon: Sparkles },
+            { name: 'Community', href: '/dashboard/team', icon: Users },
+            { name: 'Resources', href: '/dashboard/tools', icon: Wrench },
+            { name: 'Profile', href: '/dashboard/profile', icon: User },
+        ];
+    }, [role]);
 
     return (
         <div className="flex h-full flex-col glass-panel rounded-[2rem] overflow-hidden">
@@ -33,7 +51,9 @@ export default function SideNav() {
                 <nav className="space-y-2">
                     {links.map((link) => {
                         const LinkIcon = link.icon;
-                        const isActive = pathname === link.href;
+                        const isActive =
+                            pathname === link.href ||
+                            (pathname.startsWith(link.href + '/') && link.href !== '/dashboard');
 
                         return (
                             <Link
@@ -71,7 +91,9 @@ export default function SideNav() {
                             </div>
                             <div className="flex-grow overflow-hidden">
                                 <p className="text-xs font-bold text-white truncate">{session.user.name}</p>
-                                <p className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter">Initialize Link</p>
+                                <p className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter">
+                                    {role === 'MENTOR' ? 'Mentor Account' : 'Initialize Link'}
+                                </p>
                             </div>
                         </Link>
                     )}

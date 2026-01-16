@@ -34,6 +34,17 @@ model User {
   assignedTasks ProjectTask[]
   mentorReviews MentorReview[] @relation("ReviewsByMentor")
 
+  // Hierarchical Relations
+  branchId      String?
+  branch        Branch?  @relation(fields: [branchId], references: [id])
+
+  mentorId      String?
+  mentor        User?    @relation("MentoredStudents", fields: [mentorId], references: [id])
+  mentoredStudents User[] @relation("MentoredStudents")
+  
+  sentMentorshipRequests     MentorshipRequest[] @relation("StudentRequests")
+  receivedMentorshipRequests MentorshipRequest[] @relation("MentorRequests")
+
   hobbies          Hobby[]
   artifacts        Artifact[]
   comments         Comment[]
@@ -42,6 +53,17 @@ model User {
   toolSubmissionReviews ToolSubmission[] @relation("SubmissionReviews")
 
   @@map("user") // Optional: map to lowercase if Better Auth prefers, but Prisma defaults are fine if configured. Better Auth usually handles snake_case or camelCase via config.
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  location  String?
+  
+  users     User[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Session {
@@ -192,6 +214,7 @@ enum ArtifactStatus {
   SUBMITTED
   IN_PROGRESS
   VALIDATED
+  NEEDS_IMPROVEMENT
   ARCHIVED
 }
 
@@ -346,6 +369,26 @@ model Comment {
   artifactId String
   artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
+}
+
+enum MentorshipRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+model MentorshipRequest {
+  id         String                  @id @default(cuid())
+  studentId  String
+  student    User                    @relation("StudentRequests", fields: [studentId], references: [id])
+  mentorId   String
+  mentor     User                    @relation("MentorRequests", fields: [mentorId], references: [id])
+  status     MentorshipRequestStatus @default(PENDING)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+
+  @@unique([studentId, mentorId]) // One request per student-mentor pair
 }
 
 // --- Tool Resources Module ---
