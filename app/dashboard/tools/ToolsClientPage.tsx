@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { ToolCategory, ToolUsageStatus } from '@prisma/client';
-import { Search, Filter, Cpu, Globe, Terminal, Ghost, Plus, ChevronDown, Sparkles, Loader2, X } from 'lucide-react';
+import { Search, Filter, Cpu, Globe, Terminal, Ghost, Plus, ChevronDown, Sparkles, Loader2, X, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ToolCard from '@/components/tools/ToolCard';
 import ToolSubmissionModal from '@/components/tools/ToolSubmissionModal';
+import Link from 'next/link';
 
 type ToolWithUsageCount = {
     id: string;
@@ -117,13 +118,22 @@ export default function ToolsClientPage({ initialTools, categories }: Props) {
                     <h1 className="text-4xl font-extrabold tracking-tighter text-gradient">Resources Library</h1>
                     <p className="text-muted-foreground font-medium">Curated AI tools validated by the CSC ecosystem.</p>
                 </div>
-                <button
-                    onClick={() => setIsSubmissionModalOpen(true)}
-                    className="flex items-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-2xl font-bold uppercase tracking-wider transition-all group"
-                >
-                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                    Suggest Tool
-                </button>
+                <div className="flex gap-3">
+                    <Link
+                        href="/dashboard/tools/my-submissions"
+                        className="flex items-center gap-2 px-6 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl font-bold uppercase tracking-wider transition-all text-sm"
+                    >
+                        <Clock className="w-5 h-5" />
+                        My Submissions
+                    </Link>
+                    <button
+                        onClick={() => setIsSubmissionModalOpen(true)}
+                        className="flex items-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-2xl font-bold uppercase tracking-wider transition-all group"
+                    >
+                        <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                        Suggest Tool
+                    </button>
+                </div>
             </div>
 
             {/* Filters and Search */}

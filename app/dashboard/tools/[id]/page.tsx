@@ -164,7 +164,7 @@ export default async function ToolDetailsPage({ params }: { params: Promise<{ id
                                 {tool.artifactTools.map((at) => (
                                     <Link
                                         key={at.id}
-                                        href={`/dashboard/artifacts/${at.artifactId}`}
+                                        href={`/dashboard/artifacts?id=${at.artifactId}`}
                                         className="glass-panel p-6 rounded-3xl border-white/5 hover:border-primary/30 transition-all group"
                                     >
                                         <div className="space-y-3">
@@ -279,7 +279,7 @@ export default async function ToolDetailsPage({ params }: { params: Promise<{ id
                             Include {tool.name} in your project to automatically track efficiency gains and generate technical reflections.
                         </p>
                         <Link
-                            href="/dashboard/artifacts/new"
+                            href={`/dashboard/artifacts?action=new&toolId=${tool.id}`}
                             className="block text-center w-full py-3 bg-primary text-black rounded-xl font-bold uppercase tracking-widest text-[10px] hover:scale-105 transition-all"
                         >
                             Build with {tool.name}

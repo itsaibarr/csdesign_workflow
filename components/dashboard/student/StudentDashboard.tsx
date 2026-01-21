@@ -294,7 +294,7 @@ export default async function StudentDashboard() {
                         <div className="relative h-20 flex items-center justify-between px-4">
                             <div className="absolute top-1/2 left-4 right-4 h-px bg-white/10 -translate-y-1/2 z-0" />
                             {allNodes.map((node) => {
-                                const progress = user?.UserNodeProgress.find(p => p.nodeId === node.id);
+                                const progress = user?.UserNodeProgress.find((p: any) => p.nodeId === node.id);
                                 const isActive = node.id === currentProgress?.node.id;
                                 const isCompleted = progress?.status === 'COMPLETED';
 

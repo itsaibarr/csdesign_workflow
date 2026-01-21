@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, Box } from 'lucide-react';
 import Link from 'next/link';
+import { NodeStatusToggle } from '@/components/dashboard/mentor/NodeStatusToggle';
 
 export default async function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -67,12 +68,13 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                                     <p className="text-sm font-bold text-white">{p.node.title}</p>
                                     <p className="text-xs text-slate-500">Week {p.node.weekRange}</p>
                                 </div>
-                                <div className={`text-[10px] font-black uppercase px-2 py-1 rounded ${p.status === 'COMPLETED' ? 'bg-green-500/20 text-green-500' :
-                                    p.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-500' : 'bg-slate-800 text-slate-500'
-                                    }`}>
-                                    {p.status}
-                                </div>
+                                <NodeStatusToggle
+                                    studentId={student.id}
+                                    nodeId={p.nodeId}
+                                    initialStatus={p.status}
+                                />
                             </div>
+
                         ))}
                     </div>
                 </div>
@@ -96,6 +98,6 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

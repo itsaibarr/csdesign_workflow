@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { StudentCourseManager } from '@/components/dashboard/mentor/StudentCourseManager';
 
 export default async function MentorStudentsPage() {
     const session = await auth.api.getSession({
@@ -64,7 +65,12 @@ export default async function MentorStudentsPage() {
                                     </td>
                                     <td className="p-6 text-sm text-slate-400">{student.team?.name || "Unassigned"}</td>
                                     <td className="p-6 text-sm text-slate-400">{stage}</td>
-                                    <td className="p-6 text-right">
+                                    <td className="p-6 text-right flex items-center justify-end gap-4">
+                                        <StudentCourseManager
+                                            studentId={student.id}
+                                            studentName={student.name}
+                                            progress={student.UserNodeProgress}
+                                        />
                                         <Link href={`/dashboard/students/${student.id}`} className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">
                                             View Profile
                                         </Link>

@@ -21,6 +21,10 @@ export default async function Page() {
 
     if (!user) return null;
 
+    if (user.role === 'ADMIN') {
+        redirect('/dashboard/admin');
+    }
+
     if (user.role === 'MENTOR') {
         return <MentorDashboard />;
     }

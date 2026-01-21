@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Layers, Box, Users, Wrench, LogOut, Zap, User, Sparkles, FileText, CheckCircle } from 'lucide-react';
+import { Home, Layers, Box, Users, Wrench, LogOut, Zap, User, Sparkles, FileText, CheckCircle, Activity } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -23,6 +23,16 @@ export default function SideNav({ role = 'STUDENT' }: SideNavProps) {
                 { name: 'Teams', href: '/dashboard/teams', icon: Box },
                 { name: 'Reviews', href: '/dashboard/reviews', icon: FileText },
                 { name: 'Profile', href: '/dashboard/profile', icon: User },
+            ];
+        }
+
+        if (role === 'ADMIN') {
+            return [
+                { name: 'Overview', href: '/dashboard/admin', icon: Activity },
+                { name: 'Branches', href: '/dashboard/admin/branches', icon: Layers },
+                { name: 'Users', href: '/dashboard/admin/users', icon: Users },
+                { name: 'Assignments', href: '/dashboard/admin/assignments', icon: Box },
+                { name: 'Tools', href: '/dashboard/admin/tools', icon: Wrench },
             ];
         }
 
@@ -51,9 +61,12 @@ export default function SideNav({ role = 'STUDENT' }: SideNavProps) {
                 <nav className="space-y-2">
                     {links.map((link) => {
                         const LinkIcon = link.icon;
-                        const isActive =
-                            pathname === link.href ||
-                            (pathname.startsWith(link.href + '/') && link.href !== '/dashboard');
+
+                        // More precise active detection
+                        const isActive = pathname === link.href ||
+                            (link.href !== '/dashboard' &&
+                                link.href !== '/dashboard/admin' &&
+                                pathname.startsWith(link.href + '/'));
 
                         return (
                             <Link
@@ -92,7 +105,7 @@ export default function SideNav({ role = 'STUDENT' }: SideNavProps) {
                             <div className="flex-grow overflow-hidden">
                                 <p className="text-xs font-bold text-white truncate">{session.user.name}</p>
                                 <p className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter">
-                                    {role === 'MENTOR' ? 'Mentor Account' : 'Initialize Link'}
+                                    {role === 'ADMIN' ? 'Admin Access' : role === 'MENTOR' ? 'Mentor Account' : 'Student Account'}
                                 </p>
                             </div>
                         </Link>

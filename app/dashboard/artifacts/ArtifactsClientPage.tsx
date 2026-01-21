@@ -68,6 +68,15 @@ export default function ArtifactsClientPage({ initialArtifacts, userId, userRole
     const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(searchParams.get('id'));
     const [planData, setPlanData] = useState('');
     const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
+
+    // Handle URL param based tool selection
+    useEffect(() => {
+        const toolId = searchParams.get('toolId');
+        if (toolId) {
+            setSelectedToolIds(prev => prev.includes(toolId) ? prev : [...prev, toolId]);
+        }
+    }, [searchParams]);
+
     const [toolSearch, setToolSearch] = useState('');
 
     // Feedback Modal State

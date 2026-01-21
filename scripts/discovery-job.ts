@@ -31,9 +31,9 @@ async function main() {
 
         const prompt = `
             You are an expert AI trend analyst.
-            Identify 5 distinct, high-quality, and trending AI tools or libraries that would be valuable for students and software engineers.
-            Focus on tools that are currently popular or "hidden gems".
-            Do not include: ChatGPT, Claude, Gemini (unless a specific new feature), or tools that are extremely generic.
+            Identify 8 distinct, high-quality, and trending AI tools or libraries that would be valuable for students and software engineers.
+            Focus on "hidden gems" and rising stars in 2024/2025.
+            Do not include: ChatGPT, Claude, Gemini, Midjourney, v0.dev (we already have these).
             Diverse categories: Coding, Design, Research, Productivity.
 
             Return a strict JSON object with this schema:
