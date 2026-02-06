@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CS Design Workflow
 
-## Getting Started
+A learning management platform for teaching AI tools and workflows in education.
 
-First, run the development server:
+## Quick Start
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Clone and install:**
+   ```bash
+   git clone <repo-url> && cd csdesign_workflow
+   npm install
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` with your credentials:
+   - `DATABASE_URL` — PostgreSQL connection string
+   - `GEMINI_API_KEY` — Google AI API key
+   - `RESEND_API_KEY` — Email service (optional)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Setup database:**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   npx tsx scripts/seed-data.ts
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Run:**
+   ```bash
+   npm run dev
+   ```
 
-## Learn More
+   Open [http://localhost:3000](http://localhost:3000)
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Script | Usage |
+|--------|-------|
+| `make-admin.ts` | `npx tsx scripts/make-admin.ts email@example.com` |
+| `get-users.ts` | `npx tsx scripts/get-users.ts` |
+| `seed-data.ts` | `npx tsx scripts/seed-data.ts` |
+| `seed-courses.ts` | `npx tsx scripts/seed-courses.ts` |
+| `seed-tools.ts` | `npx tsx scripts/seed-tools.ts` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
+- **Framework:** Next.js 14 (App Router)
+- **Database:** PostgreSQL + Prisma
+- **Auth:** Better Auth
+- **AI:** Google Gemini API
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy on [Vercel](https://vercel.com) or any Node.js hosting platform.

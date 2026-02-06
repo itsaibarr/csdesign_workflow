@@ -1,4 +1,0 @@
-Found 3 users:
-mentor@csc.com (MENTOR)
-student@csc.com (STUDENT)
-cametame001@gmail.com (ADMIN)

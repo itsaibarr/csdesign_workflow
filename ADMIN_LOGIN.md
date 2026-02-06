@@ -1,29 +1,31 @@
-## Admin Panel Login Instructions
+## Admin Panel Access
 
-Your admin account has been created with the following credentials:
+### Creating an Admin Account
 
-**Email:** `cametame001@gmail.com`  
-**Password:** `password123`  
-**Role:** `ADMIN`
+Run the following script to create or promote a user to admin:
 
-### Steps to Access Admin Panel:
+```bash
+npx tsx scripts/create-admin.ts your-email@example.com your-secure-password
+```
+
+Or manually update an existing user's role:
+
+```bash
+npx tsx -e "const {prisma} = require('./lib/prisma'); prisma.user.update({where: {email: 'YOUR_EMAIL'}, data: {role: 'ADMIN'}}).then(u => console.log('Updated:', u.email, u.role)).finally(() => prisma.\$disconnect())"
+```
+
+### Accessing the Admin Panel
 
 1. **Logout** from your current session (click "DISCONNECT" in the sidebar)
 2. **Navigate to** `/login`
-3. **Sign in** with the credentials above
+3. **Sign in** with your admin credentials
 4. You will be automatically redirected to `/dashboard/admin`
 
-### Troubleshooting:
+### Troubleshooting
 
 If you're still seeing the student dashboard after logging in:
 - Clear your browser cookies
 - Try in an incognito/private window
-- Verify your role in the database by running: `npx tsx scripts/check-user.ts`
+- Verify your role: `npx tsx scripts/check-user.ts`
 
-### Alternative: Manual Database Update
-
-If the password script didn't work, you can manually update your role in the database:
-
-```bash
-npx tsx -e "const {prisma} = require('./lib/prisma'); prisma.user.update({where: {email: 'cametame001@gmail.com'}, data: {role: 'ADMIN'}}).then(u => console.log('Updated:', u.email, u.role)).finally(() => prisma.$disconnect())"
-```
+> **Note:** Never commit credentials to version control. Store sensitive data in `.env` (which is gitignored).

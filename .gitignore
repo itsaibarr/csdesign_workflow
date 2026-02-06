@@ -39,3 +39,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# debug / logs
+*.log
+*.txt
+!README.txt
+
+# build artifacts
+/scripts-dist/
+/test-results/
+
+# internal docs (not for public repo)
+/design_structure/
+/designinspo/
+/PLAN.md
+/ADMIN_LOGIN.md
+
+# editor / IDE
+.agent/
+.idea/
+.vscode/
